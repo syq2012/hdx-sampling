@@ -145,23 +145,32 @@ def intersect(A, B):
     return sum([v in A for v in B])
 
 # sample gaussian with give covariance matrix where vals[i] holds value for A, B with intersection of size i
-def sample_gaussian(n, vals, gauss):
+def sample_gaussian_from_idemp(n, vals, gauss):
     l = math.comb(n, 3)
     V = get_coord(n, 3)
     
     idemp_val = idempotent_vals(n)
     sqrt_cov_eig = sqrt_cov(n, vals)
     
+    E_vals = idemp_val.T.dot(sqrt_cov_eig)
 #     gauss = np.random.standard_normal(l)
+    # print(E_vals.shape)
     res = np.zeros(l)
     for i in range(l):
-        cur_E = sum([sqrt_cov_eig[k] * idemp_val[k][3 - intersect(V[i], V[i])] for k in range(4)])
-        res[i] += gauss[i] * cur_E
-        for j in range(i):
-#             get sqrt(cov)[i][j]
-            cur_E = sum([sqrt_cov_eig[k] * idemp_val[k][3 - intersect(V[i], V[j])] for k in range(4)])
-            res[i] += gauss[j] * cur_E
-            res[j] += gauss[i] * cur_E
+        if i % 1000 == 0:
+            print('cur col ', i)
+        cur_E = np.array([E_vals[3 - intersect(V[i], V[j])] for j in range(i + 1)])
+        res[:i] += gauss[i] * cur_E[:-1]
+        res[i] += gauss[:i + 1].dot(cur_E)
+
+
+#         cur_E = sum([sqrt_cov_eig[k] * idemp_val[k][3 - intersect(V[i], V[i])] for k in range(4)])
+#         res[i] += gauss[i] * cur_E
+#         for j in range(i):
+# #             get sqrt(cov)[i][j]
+#             cur_E = sum([sqrt_cov_eig[k] * idemp_val[k][3 - intersect(V[i], V[j])] for k in range(4)])
+#             res[i] += gauss[j] * cur_E
+#             res[j] += gauss[i] * cur_E
     return res
 
 
